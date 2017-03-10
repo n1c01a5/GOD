@@ -41,7 +41,7 @@ contract Go {
       connections.length++;
       connections[connections.length-1].positions = _positions;
       connections[connections.length-1].set = _set;
-      connections[connections.length-1].nb_positions = connections[connections.length-1].nb_positions++;
+      connections[connections.length-1].nb_positions = 1; // TODO chnage this
       connections[connections.length-1].color = _color;
       connections[connections.length-1].liberties = _liberties;
       connections[connections.length-1].nb_liberties = _nb_liberties;
@@ -51,11 +51,11 @@ contract Go {
 
     // set a connextion
     // normal internal function
-    function setConnection (uint8 _position) returns(uint) {
+    function setConnection (uint8 _position, uint256 refConnection) returns(uint) {
       //test
-      Connection connection = connections[getIndexConnectionByPosition(_position)];
-      connections[getIndexConnectionByPosition(_position)].positions[connection.nb_positions] = _position;
-      return connections.length;
+      Connection connection = connections[refConnection];
+      connections[refConnection].positions[connection.nb_positions] = _position;
+      return refConnection;
     }
 
     // get a connection
@@ -91,7 +91,8 @@ contract Go {
         var _indexConnectionByPosition = getIndexConnectionByPosition(_position);
 
         if (_indexConnectionByPosition > 0) {
-          setConnection(_position);
+          // test
+          setConnection(_position, 0);
           return true;
         }
 
