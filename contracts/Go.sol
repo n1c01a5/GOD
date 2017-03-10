@@ -6,35 +6,42 @@ contract Go {
     uint lastCapturePosition;
     uint public log;
 
+    // connection tokens
     struct Connection {
         bool set;
         uint[255] positions;
-        uint8 np_positions;
+        uint8 nb_positions;
         bool color;
         uint[255] liberties;
         uint8 nb_liberties;
     }
 
+    // store all connections
     Connection[] public connections;
 
-    /// position fait correspondre index de connections
+    // for each position link a connection or empty
+    // pointeur vers la connection
     mapping (uint8 => uint256) public indexConnection;
 
+    // constructor
     function Go (uint8 _sizeGoban) {
       if (_sizeGoban > 16)
         throw;
     }
 
-    function setSizeGoban(uint8 _sizeGoban) returns (uint8){
+    // set size of the goban
+    function setSizeGoban (uint8 _sizeGoban) returns (uint8){
       sizeGoban = _sizeGoban;
       return sizeGoban;
     }
 
-    function addConnection(uint8 _position, bool _set, uint[255] _positions, uint8 _np_positions, bool _color, uint[255] _liberties, uint8 _nb_liberties) public returns(uint) {
+    // add a new connextion
+    // normal internal function
+    function addConnection (uint8 _position, bool _set, uint[255] _positions, bool _color, uint[255] _liberties, uint8 _nb_liberties) internal returns(uint) {
       connections.length++;
-      connections[connections.length-1].set = _set;
       connections[connections.length-1].positions = _positions;
-      connections[connections.length-1].np_positions = _np_positions;
+      connections[connections.length-1].set = _set;
+      connections[connections.length-1].nb_positions = connections[connections.length-1].nb_positions++;
       connections[connections.length-1].color = _color;
       connections[connections.length-1].liberties = _liberties;
       connections[connections.length-1].nb_liberties = _nb_liberties;
@@ -42,11 +49,23 @@ contract Go {
       return connections.length;
     }
 
-    function getConnection(uint index) public constant returns(bool, uint[255], uint8, bool, uint[255], uint8) {
-      return (true, connections[index].positions, connections[index].np_positions, connections[index].color, connections[index].liberties, connections[index].nb_liberties);
+    // set a connextion
+    // normal internal function
+    function setConnection (uint8 _position) returns(uint) {
+      //test
+      Connection connection = connections[getIndexConnectionByPosition(_position)];
+      connections[getIndexConnectionByPosition(_position)].positions[connection.nb_positions] = _position;
+      return connections.length;
     }
 
-    function getIndexConnectionByPosition(uint8 _position) public constant returns(uint256) {
+    // get a connection
+    function getConnection (uint index) public constant returns(bool, uint[255], uint8, bool, uint[255], uint8) {
+      return (true, connections[index].positions, connections[index].nb_positions, connections[index].color, connections[index].liberties, connections[index].nb_liberties);
+    }
+
+    // get the index of the connection
+    // normal internal
+    function getIndexConnectionByPosition (uint8 _position) public constant returns(uint256) {
       return indexConnection[_position];
     }
 
@@ -56,8 +75,9 @@ contract Go {
 
 
 
-
-    function setEntry(uint8 _position) returns (bool){
+    // set an entry
+    // 1 token is free right & left & up & down are free
+    function setEntry (uint8 _position) returns (bool) {
 
         // si position hors goban
         // verifiy si deja un pion
@@ -67,35 +87,40 @@ contract Go {
         /*if (_position > sizeGoban)
           throw;*/
 
-        var x = getIndexConnectionByPosition(_position);
+        // if there is already a token, throw
+        var _indexConnectionByPosition = getIndexConnectionByPosition(_position);
+
+        if (_indexConnectionByPosition > 0) {
+          setConnection(_position);
+          return true;
+        }
+
+        /*if (indexConnection < 1) {throw;}*/
+
         int8 r = -1;
         int8 l = -1;
         int8 u = -1;
         int8 d = -1;
 
-
+        // recuperer les connections s'il y en a
+        // if left exists set left position
         if(_position > 0 && (_position % sizeGoban) != 0) {
-          r = int8(getIndexConnectionByPosition(_position-1));
+          l = int8(getIndexConnectionByPosition(_position-1));
         }
 
+        // if right exists set right
         if(_position < sizeGoban*sizeGoban && (_position+1 % sizeGoban) != 0) {
-          l = int8(getIndexConnectionByPosition(_position+1));
+          r = int8(getIndexConnectionByPosition(_position+1));
         }
 
-        if(_position-sizeGoban >= 0) {
-          r = int8(getIndexConnectionByPosition(_position-sizeGoban));
-        }
-
-        if(_position+sizeGoban < sizeGoban*sizeGoban) {
-          r = int8(getIndexConnectionByPosition(_position+sizeGoban));
-        }
-
-        if(x > 0 && r != -1) {
+        // if there is no connection
+        if(r != -1 && l != -1) {
           uint[255] memory _positions;
           uint[255] memory _liberties;
+          // free position
           _positions[0] = _position;
           _liberties[0] = 4;
-          addConnection(_position, true, _positions, 1, true, _liberties, 4);
+          addConnection(_position, true, _positions, true, _liberties, 4);
         }
 
 
