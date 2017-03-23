@@ -27,12 +27,7 @@ contract Go {
     function Go (uint8 _sizeGoban) {
       if (_sizeGoban > 16)
         throw;
-    }
-
-    // set size of the goban
-    function setSizeGoban (uint8 _sizeGoban) returns (uint8){
       sizeGoban = _sizeGoban;
-      return sizeGoban;
     }
 
     // add a new connextion
@@ -78,6 +73,11 @@ contract Go {
     // set an entry
     // 1 token is free right & left & up & down are free
     function setEntry (uint8 _position) returns (bool) {
+
+      // modifier hors goban
+      if (_position > sizeGoban*sizeGoban) {
+        throw;
+      }
 
         // si position hors goban
         // verifiy si deja un pion
